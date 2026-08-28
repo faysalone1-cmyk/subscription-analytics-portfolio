@@ -24,6 +24,8 @@ The approved business scope, dataset boundary, entities, and seven-week delivery
 
 The current raw-to-staging system, component responsibilities, security boundary, and planned downstream layers are shown in [`docs/architecture.md`](docs/architecture.md).
 
+Repository changes follow the branch, validation, review, and pull-request process documented in [`docs/git-workflow.md`](docs/git-workflow.md).
+
 ## Planned analytical flow
 
 1. Generate documented synthetic subscription, invoice, payment, refund, and product-event data.
