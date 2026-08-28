@@ -1,0 +1,10 @@
+[
+  {"name": "payment_attempt_id", "type": "STRING", "mode": "REQUIRED"},
+  {"name": "invoice_id", "type": "STRING", "mode": "REQUIRED"},
+  {"name": "attempt_number", "type": "INT64", "mode": "REQUIRED"},
+  {"name": "attempted_at", "type": "TIMESTAMP", "mode": "REQUIRED"},
+  {"name": "amount_attempted_minor_units", "type": "INT64", "mode": "REQUIRED"},
+  {"name": "currency_code", "type": "STRING", "mode": "REQUIRED"},
+  {"name": "payment_status", "type": "STRING", "mode": "REQUIRED"},
+  {"name": "failure_reason", "type": "STRING", "mode": "NULLABLE"}
+]

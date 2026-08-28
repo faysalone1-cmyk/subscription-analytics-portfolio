@@ -1,0 +1,9 @@
+[
+  {"name": "customer_id", "type": "STRING", "mode": "REQUIRED"},
+  {"name": "signup_at", "type": "TIMESTAMP", "mode": "REQUIRED"},
+  {"name": "country_code", "type": "STRING", "mode": "REQUIRED"},
+  {"name": "acquisition_channel", "type": "STRING", "mode": "REQUIRED"},
+  {"name": "acquisition_campaign", "type": "STRING", "mode": "NULLABLE"},
+  {"name": "device_type", "type": "STRING", "mode": "REQUIRED"},
+  {"name": "learning_goal", "type": "STRING", "mode": "REQUIRED"}
+]

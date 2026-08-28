@@ -1,0 +1,13 @@
+skillspring_analytics:
+  target: dev
+  outputs:
+    dev:
+      type: bigquery
+      method: oauth
+      project: "{{ env_var('GOOGLE_CLOUD_PROJECT') }}"
+      dataset: skillspring_analytics
+      location: EU
+      threads: 4
+      maximum_bytes_billed: 2000000000
+      job_execution_timeout_seconds: 300
+      job_retries: 1

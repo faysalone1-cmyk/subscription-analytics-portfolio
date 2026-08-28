@@ -1,0 +1,14 @@
+[
+  {"name": "invoice_id", "type": "STRING", "mode": "REQUIRED"},
+  {"name": "subscription_id", "type": "STRING", "mode": "REQUIRED"},
+  {"name": "plan_version_id", "type": "STRING", "mode": "REQUIRED"},
+  {"name": "billing_reason", "type": "STRING", "mode": "REQUIRED"},
+  {"name": "billing_period_start", "type": "DATE", "mode": "REQUIRED"},
+  {"name": "billing_period_end", "type": "DATE", "mode": "REQUIRED"},
+  {"name": "issued_at", "type": "TIMESTAMP", "mode": "REQUIRED"},
+  {"name": "due_at", "type": "TIMESTAMP", "mode": "REQUIRED"},
+  {"name": "amount_due_minor_units", "type": "INT64", "mode": "REQUIRED"},
+  {"name": "currency_code", "type": "STRING", "mode": "REQUIRED"},
+  {"name": "invoice_status", "type": "STRING", "mode": "REQUIRED"},
+  {"name": "paid_at", "type": "TIMESTAMP", "mode": "NULLABLE"}
+]

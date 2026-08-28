@@ -1,0 +1,12 @@
+[
+  {"name": "subscription_event_id", "type": "STRING", "mode": "REQUIRED"},
+  {"name": "subscription_id", "type": "STRING", "mode": "REQUIRED"},
+  {"name": "event_sequence", "type": "INT64", "mode": "REQUIRED"},
+  {"name": "event_at", "type": "TIMESTAMP", "mode": "REQUIRED"},
+  {"name": "event_type", "type": "STRING", "mode": "REQUIRED"},
+  {"name": "from_status", "type": "STRING", "mode": "NULLABLE"},
+  {"name": "to_status", "type": "STRING", "mode": "NULLABLE"},
+  {"name": "from_plan_version_id", "type": "STRING", "mode": "NULLABLE"},
+  {"name": "to_plan_version_id", "type": "STRING", "mode": "NULLABLE"},
+  {"name": "event_reason", "type": "STRING", "mode": "NULLABLE"}
+]

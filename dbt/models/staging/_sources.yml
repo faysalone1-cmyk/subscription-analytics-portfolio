@@ -1,0 +1,28 @@
+version: 2
+
+sources:
+  - name: skillspring_raw
+    description: >-
+      Immutable synthetic SkillSpring source tables generated from the approved
+      source-data contract and loaded into the EU BigQuery raw dataset.
+    database: "{{ env_var('GOOGLE_CLOUD_PROJECT', 'skillspring-analytics') }}"
+    schema: skillspring_raw
+    tables:
+      - name: customers
+        description: One row per synthetic SkillSpring customer.
+      - name: plans
+        description: One row per version of a subscription plan.
+      - name: subscriptions
+        description: One row per customer subscription instance.
+      - name: subscription_events
+        description: One row per recorded subscription lifecycle or plan-change event.
+      - name: invoices
+        description: One row per amount billed to a subscription.
+      - name: payment_attempts
+        description: One row per collection attempt against an invoice.
+      - name: refunds
+        description: One row per successful refund transaction.
+      - name: product_events
+        description: One row per recorded customer action in SkillSpring.
+      - name: experiment_assignments
+        description: One row per customer per experiment.

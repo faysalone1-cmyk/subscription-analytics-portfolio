@@ -1,0 +1,7 @@
+[
+  {"name": "customer_id", "type": "STRING", "mode": "REQUIRED"},
+  {"name": "experiment_id", "type": "STRING", "mode": "REQUIRED"},
+  {"name": "variant", "type": "STRING", "mode": "REQUIRED"},
+  {"name": "assigned_at", "type": "TIMESTAMP", "mode": "REQUIRED"},
+  {"name": "first_exposed_at", "type": "TIMESTAMP", "mode": "NULLABLE"}
+]

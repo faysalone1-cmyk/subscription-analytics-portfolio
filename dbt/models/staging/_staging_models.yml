@@ -1,0 +1,77 @@
+version: 2
+
+models:
+  - name: stg_customers
+    description: >-
+      One row per customer with standardized signup dates and a governed region
+      derived from the raw country code.
+    columns:
+      - name: customer_id
+        description: Unique synthetic customer identifier.
+        data_tests:
+          - unique
+          - not_null
+      - name: region
+        description: Governed reporting region derived from country_code.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['northern_europe', 'western_europe', 'southern_europe']
+      - name: acquisition_channel
+        description: Channel credited with acquiring the customer signup.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['organic_search', 'paid_search', 'paid_social', 'referral', 'affiliate', 'direct']
+
+  - name: stg_subscriptions
+    description: >-
+      One row per subscription instance with clean lifecycle timestamps and
+      simple paid-conversion and cancellation flags.
+    columns:
+      - name: subscription_id
+        description: Unique subscription identifier.
+        data_tests:
+          - unique
+          - not_null
+      - name: customer_id
+        description: Customer who owns the subscription.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_customers')
+                field: customer_id
+      - name: current_status
+        description: Subscription status at the reporting cutoff.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['trialing', 'active', 'past_due', 'canceled']
+
+  - name: stg_payment_attempts
+    description: >-
+      One row per invoice collection attempt with an exact euro amount and
+      reusable retry and success flags.
+    columns:
+      - name: payment_attempt_id
+        description: Unique payment-attempt identifier.
+        data_tests:
+          - unique
+          - not_null
+      - name: invoice_id
+        description: Invoice against which collection was attempted.
+        data_tests:
+          - not_null
+      - name: payment_status
+        description: Outcome of this individual collection attempt.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['succeeded', 'failed']
+      - name: currency_code
+        description: Currency of the attempted amount.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['EUR']

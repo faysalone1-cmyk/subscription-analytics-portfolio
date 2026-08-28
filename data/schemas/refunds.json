@@ -1,0 +1,8 @@
+[
+  {"name": "refund_id", "type": "STRING", "mode": "REQUIRED"},
+  {"name": "payment_attempt_id", "type": "STRING", "mode": "REQUIRED"},
+  {"name": "refunded_at", "type": "TIMESTAMP", "mode": "REQUIRED"},
+  {"name": "amount_refunded_minor_units", "type": "INT64", "mode": "REQUIRED"},
+  {"name": "currency_code", "type": "STRING", "mode": "REQUIRED"},
+  {"name": "refund_reason", "type": "STRING", "mode": "REQUIRED"}
+]
