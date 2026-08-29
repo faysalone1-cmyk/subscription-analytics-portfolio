@@ -1,0 +1,69 @@
+name: Analytics CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: analytics-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  repository-validation:
+    name: Credential-free repository validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: requirements-dbt.txt
+
+      - name: Install pinned dbt dependencies
+        run: python -m pip install --requirement requirements-dbt.txt
+
+      - name: Check Python syntax
+        run: python -m compileall -q scripts
+
+      - name: Validate BigQuery JSON schemas
+        shell: bash
+        run: |
+          for schema_file in data/schemas/*.json; do
+            python -m json.tool "$schema_file" > /dev/null
+          done
+
+      - name: Generate deterministic smoke-test data
+        run: |
+          python scripts/generate_synthetic_data.py \
+            --customers 250 \
+            --output-dir data/generated/ci
+
+      - name: Validate smoke-test data
+        run: |
+          python scripts/validate_generated_data.py \
+            --data-dir data/generated/ci
+
+      - name: Parse dbt project without cloud credentials
+        env:
+          GOOGLE_CLOUD_PROJECT: skillspring-ci-placeholder
+        run: |
+          export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/nonexistent-google-credentials.json"
+          mkdir -p "$RUNNER_TEMP/dbt-profile"
+          cp dbt/profiles.yml.example "$RUNNER_TEMP/dbt-profile/profiles.yml"
+          dbt parse \
+            --no-partial-parse \
+            --project-dir dbt \
+            --profiles-dir "$RUNNER_TEMP/dbt-profile"

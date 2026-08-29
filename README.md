@@ -26,6 +26,8 @@ The current raw-to-staging system, component responsibilities, security boundary
 
 Repository changes follow the branch, validation, review, and pull-request process documented in [`docs/git-workflow.md`](docs/git-workflow.md).
 
+Pull requests and pushes to `main` also run the credential-free workflow in [`.github/workflows/analytics-ci.yml`](.github/workflows/analytics-ci.yml). It checks Python syntax and JSON schemas, generates and independently validates a small deterministic dataset, and parses the dbt project without connecting to BigQuery. Live warehouse builds remain a separate authenticated validation step.
+
 ## Planned analytical flow
 
 1. Generate documented synthetic subscription, invoice, payment, refund, and product-event data.
