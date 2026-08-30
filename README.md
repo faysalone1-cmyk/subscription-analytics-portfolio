@@ -28,6 +28,8 @@ Repository changes follow the branch, validation, review, and pull-request proce
 
 Pull requests and pushes to `main` also run the credential-free workflow in [`.github/workflows/analytics-ci.yml`](.github/workflows/analytics-ci.yml). It checks Python syntax and JSON schemas, generates and independently validates a small deterministic dataset, and parses the dbt project without connecting to BigQuery. Live warehouse builds remain a separate authenticated validation step.
 
+The evidence, validation boundaries, readiness explanations, honest limitations, and approved Week 2 handoff are consolidated in [`docs/week-1-review.md`](docs/week-1-review.md).
+
 ## Planned analytical flow
 
 1. Generate documented synthetic subscription, invoice, payment, refund, and product-event data.
