@@ -1,6 +1,6 @@
 # Week 1 Foundation Review
 
-Status: Readiness explanations and the Week 2 handoff reviewed with Faisal on 2026-08-30; Git publication validation is in progress.
+Status: Readiness explanations and the Week 2 handoff were reviewed with Faisal on 2026-08-30; pull request #3 and post-merge CI both passed.
 
 ## Week 1 objective
 
