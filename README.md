@@ -4,7 +4,7 @@ SkillSpring is a production-style analytics portfolio project for a fictional co
 
 ## Project status
 
-Week 1 — repository and analytics-engineering foundations. The dbt project is connected to two EU BigQuery datasets. The validated `skillspring_raw` layer contains 2,512,863 deterministic synthetic rows across nine physical tables. The `skillspring_analytics` layer currently contains three tested dbt staging views.
+Week 2 — grain-preserving staging expansion. The dbt project is connected to two EU BigQuery datasets. The validated `skillspring_raw` layer contains 2,512,863 deterministic synthetic rows across nine physical tables. The `skillspring_analytics` layer currently contains six tested dbt staging views.
 
 ## Evidence at a glance
 
@@ -14,9 +14,9 @@ Week 1 — repository and analytics-engineering foundations. The dbt project is 
 | Raw BigQuery tables | 9 |
 | Local validation groups | 11 passed |
 | Warehouse raw checks | 27 passed |
-| dbt staging views | 3 |
-| dbt generic tests | 14 passed |
-| Independent staging checks | 9 passed |
+| dbt staging views | 6 |
+| dbt generic tests | 34 passed |
+| Independent baseline staging checks | 9 passed |
 
 ## Architecture and scope
 

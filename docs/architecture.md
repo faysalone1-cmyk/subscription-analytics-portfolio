@@ -16,7 +16,7 @@ flowchart LR
         validator["Python data validator"]
         loader["BigQuery raw-data loader"]
         sources["dbt source declarations"]
-        models["Five dbt staging models"]
+        models["Six dbt staging models"]
         checks["dbt tests and validation SQL"]
         evidence["Validation evidence"]
     end
@@ -27,7 +27,7 @@ flowchart LR
 
     subgraph warehouse["BigQuery project: skillspring-analytics, EU"]
         rawData["skillspring_raw: nine physical tables"]
-        stagingViews["skillspring_analytics: five staging views"]
+        stagingViews["skillspring_analytics: six staging views"]
     end
 
     subgraph planned["Planned later weeks"]
@@ -65,7 +65,7 @@ Solid connections represent current working lineage. Dotted connections represen
 | Generated CSV files | Ignored local `data/generated/` directory | Reproducible warehouse-loading inputs | Local and disposable |
 | Raw layer | BigQuery `skillspring_raw` | Preserve source-shaped synthetic records across nine entities | Nine physical tables |
 | dbt source declarations | Repository | Register raw-table addresses, descriptions, and lineage without copying data | Version controlled metadata |
-| Staging layer | BigQuery `skillspring_analytics` | Apply light, reusable, grain-preserving transformations | Five logical views |
+| Staging layer | BigQuery `skillspring_analytics` | Apply light, reusable, grain-preserving transformations | Six logical views |
 | Tests and validation | Repository plus BigQuery execution | Detect grain, relationship, accepted-value, and transformation failures | Version-controlled tests and evidence |
 
 ## Current dbt lineage
@@ -77,14 +77,15 @@ Solid connections represent current working lineage. Dotted connections represen
 | `skillspring_raw.subscriptions` | `skillspring_analytics.stg_subscriptions` | One row per subscription | Historical paid-conversion and current-cancellation flags |
 | `skillspring_raw.invoices` | `skillspring_analytics.stg_invoices` | One row per invoice | Exact euro amount and paid-status flag |
 | `skillspring_raw.payment_attempts` | `skillspring_analytics.stg_payment_attempts` | One row per payment attempt | Exact euro amount plus retry and success flags |
+| `skillspring_raw.refunds` | `skillspring_analytics.stg_refunds` | One row per refund transaction | Exact euro amount with governed payment-attempt lineage and refund reasons |
 
-The remaining four raw sources are declared in dbt but do not yet have staging models.
+The remaining three raw sources are declared in dbt but do not yet have staging models.
 
 ## Modeling boundary
 
 Each current staging model reads one raw source and preserves that source's grain. For example, `stg_payment_attempts` reads `payment_attempts`; it retains `invoice_id` from the attempt row but does not join the invoices table.
 
-Week 2 has added grain-preserving plan and invoice staging models. Refund staging comes next, before deliberate cross-entity joins are introduced in intermediate models. This boundary keeps cleaning logic separate from business combinations and reduces the risk of duplicating one-row-per-invoice amounts across multiple payment-attempt rows.
+Week 2 has added grain-preserving plan, invoice, and refund staging models. The next model deliberately combines entities at invoice grain in the intermediate layer. This boundary keeps cleaning logic separate from business combinations and reduces the risk of duplicating one-row-per-invoice amounts across multiple payment-attempt or refund rows.
 
 ## Reproducibility and security
 
@@ -99,7 +100,7 @@ Week 2 has added grain-preserving plan and invoice staging models. Refund stagin
 - The full generator produced 2,512,863 rows across nine entities using seed `20260827`.
 - Local validation passed 11 independent groups with zero errors.
 - Warehouse raw validation passed 27 checks.
-- The expanded dbt build created five staging views and passed 28 generic tests (`PASS=33 WARN=0 ERROR=0 SKIP=0`).
-- Independent staging checks confirmed preserved plan and invoice grains, exact euro conversions, consistent status flags and timestamps, valid invoice periods, and positive billed amounts.
+- The expanded dbt build created six staging views and passed 34 generic tests (`PASS=40 WARN=0 ERROR=0 SKIP=0`).
+- Independent staging checks confirmed preserved plan, invoice, and refund grains; exact euro conversions; consistent statuses and timestamps; valid invoice periods; positive amounts; successful refund parents; and no over-refunded payments.
 
 Detailed evidence is available in `raw-data-load-validation.md` and `dbt-staging-validation.md`.
