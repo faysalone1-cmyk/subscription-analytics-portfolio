@@ -32,23 +32,24 @@ The declaration records their warehouse address and approved grain descriptions 
 | `skillspring_raw.subscriptions` | `skillspring_analytics.stg_subscriptions` | One row per subscription | Reusable paid-conversion and canceled flags |
 | `skillspring_raw.invoices` | `skillspring_analytics.stg_invoices` | One row per invoice | Exact minor-unit-to-euro conversion plus paid-status flag |
 | `skillspring_raw.payment_attempts` | `skillspring_analytics.stg_payment_attempts` | One row per attempt | Exact minor-unit-to-euro conversion plus retry and success flags |
+| `skillspring_raw.refunds` | `skillspring_analytics.stg_refunds` | One row per refund transaction | Exact minor-unit-to-euro conversion with governed payment-attempt lineage and refund reasons |
 
 ## dbt build evidence
 
 dbt Core 1.11.14 with the BigQuery adapter 1.11.3 parsed:
 
 - 9 sources
-- 5 models
-- 28 generic data tests
+- 6 models
+- 34 generic data tests
 
-`dbt build --select path:models/staging` created all five BigQuery views and passed all 28 tests:
+`dbt build --select path:models/staging` created all six BigQuery views and passed all 34 tests:
 
-- 5 uniqueness tests
-- 9 not-null tests
-- 11 accepted-value tests
-- 3 relationship tests
+- 6 uniqueness tests
+- 11 not-null tests
+- 13 accepted-value tests
+- 4 relationship tests
 
-Final dbt result: `PASS=33 WARN=0 ERROR=0 SKIP=0 TOTAL=33`.
+Final dbt result: `PASS=40 WARN=0 ERROR=0 SKIP=0 TOTAL=40`.
 
 ## Independent transformation validation
 
@@ -66,7 +67,10 @@ Independent Week 2 warehouse review also confirmed:
 - `stg_invoices` contained 128,633 rows and 128,633 distinct invoice IDs.
 - Invoice validation returned zero amount-conversion, paid-flag, paid-timestamp, billing-period, due-timestamp, and non-positive-amount violations.
 - Representative open, paid, and uncollectible invoices had consistent amounts, payment timestamps, and paid flags.
+- `stg_refunds` contained 4,093 rows and 4,093 distinct refund IDs.
+- The version-controlled `sql/validation/refund_staging_validation.sql` returned zero amount-conversion, non-positive-amount, missing-payment, unsuccessful-payment, timestamp-order, currency, and over-refund violations.
+- A representative successful payment with two partial refunds retained two distinct refund rows; the combined EUR 13.28 refund remained below the original EUR 31.99 payment.
 
 ## Result and boundary
 
-The expanded dbt lineage is working and tested from five raw sources to five staging views. Four declared sources do not yet have staging models, and no intermediate models, marts, governed business metrics, or reconciliation reports have been built. Those remain later roadmap deliverables.
+The expanded dbt lineage is working and tested from six raw sources to six staging views. Three declared sources do not yet have staging models, and no intermediate models, marts, governed business metrics, or reconciliation reports have been built. Those remain later roadmap deliverables.

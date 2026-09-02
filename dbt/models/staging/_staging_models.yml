@@ -178,3 +178,40 @@ models:
         description: UTC timestamp when full collection completed; null otherwise.
       - name: is_paid
         description: True when invoice_status is paid.
+
+  - name: stg_refunds
+    description: >-
+      One row per refund transaction, preserving the raw refund grain while
+      adding an exact euro amount for analysis.
+    columns:
+      - name: refund_id
+        description: Unique identifier for the refund transaction.
+        data_tests:
+          - unique
+          - not_null
+      - name: payment_attempt_id
+        description: Successful payment attempt against which the refund was issued.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_payment_attempts')
+                field: payment_attempt_id
+      - name: refunded_at
+        description: UTC timestamp when the refund was processed.
+      - name: amount_refunded_minor_units
+        description: Amount refunded as integer euro cents in the raw source.
+      - name: amount_refunded_eur
+        description: Exact refunded amount in euros derived from the minor-unit amount.
+      - name: currency_code
+        description: Currency used for the refunded amount.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['EUR']
+      - name: refund_reason
+        description: Controlled business reason for the refund.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['customer_request', 'billing_error', 'duplicate_charge', 'service_issue', 'fraud_reported']
