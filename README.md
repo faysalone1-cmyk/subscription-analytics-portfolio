@@ -4,7 +4,7 @@ SkillSpring is a production-style analytics portfolio project for a fictional co
 
 ## Project status
 
-Week 2 — grain-preserving staging expansion. The dbt project is connected to two EU BigQuery datasets. The validated `skillspring_raw` layer contains 2,512,863 deterministic synthetic rows across nine physical tables. The `skillspring_analytics` layer currently contains six tested dbt staging views.
+Week 2 — tested payment-outcome modeling across staging, intermediate, and mart layers. The dbt project is connected to two EU BigQuery datasets. The validated `skillspring_raw` layer contains 2,512,863 deterministic synthetic rows across nine physical tables. The `skillspring_analytics` layer contains six grain-preserving staging views, one invoice-grain payment-outcome view, and one daily payment-recovery mart.
 
 ## Evidence at a glance
 
@@ -14,13 +14,17 @@ Week 2 — grain-preserving staging expansion. The dbt project is connected to t
 | Raw BigQuery tables | 9 |
 | Local validation groups | 11 passed |
 | Warehouse raw checks | 27 passed |
-| dbt staging views | 6 |
-| dbt generic tests | 34 passed |
+| dbt models | 8 across 3 layers |
+| dbt generic tests | 74 passed |
+| dbt singular tests | 2 passed |
+| Full dbt build | 84/84 operations passed |
 | Independent baseline staging checks | 9 passed |
+| Invoice outcomes | 128,633 unique invoices |
+| Daily recovery mart | 532 unique invoice dates |
 
 ## Architecture and scope
 
-The approved business scope, dataset boundary, entities, and seven-week delivery chain are documented in [`docs/project-brief.md`](docs/project-brief.md). The verified warehouse connection is documented in [`docs/dbt-connection-validation.md`](docs/dbt-connection-validation.md), raw generation/load evidence is in [`docs/raw-data-load-validation.md`](docs/raw-data-load-validation.md), and the first tested dbt lineage is in [`docs/dbt-staging-validation.md`](docs/dbt-staging-validation.md).
+The approved business scope, dataset boundary, entities, and seven-week delivery chain are documented in [`docs/project-brief.md`](docs/project-brief.md). The verified warehouse connection is documented in [`docs/dbt-connection-validation.md`](docs/dbt-connection-validation.md), raw generation/load evidence is in [`docs/raw-data-load-validation.md`](docs/raw-data-load-validation.md), and the tested dbt lineage is in [`docs/dbt-staging-validation.md`](docs/dbt-staging-validation.md).
 
 The current raw-to-staging system, component responsibilities, security boundary, and planned downstream layers are shown in [`docs/architecture.md`](docs/architecture.md).
 
@@ -92,13 +96,13 @@ dbt debug --project-dir dbt --profiles-dir .tools/dbt
 
 ### Generate, validate, load, and build
 
-Generate the approved dataset with the fixed seed, validate it independently, load the nine raw tables, and build the current staging lineage:
+Generate the approved dataset with the fixed seed, validate it independently, load the nine raw tables, and build the current dbt lineage:
 
 ```bash
 python3 scripts/generate_synthetic_data.py --customers 50000 --output-dir data/generated/full
 python3 scripts/validate_generated_data.py --data-dir data/generated/full
 bash scripts/load_bigquery_raw.sh data/generated/full
-dbt build --project-dir dbt --profiles-dir .tools/dbt --select path:models/staging
+dbt build --project-dir dbt --profiles-dir .tools/dbt --select path:models
 ```
 
 The generator refuses to overwrite known output unless explicitly instructed, and the loader does not silently replace an existing raw table. See [`data/README.md`](data/README.md) before intentionally regenerating or replacing data.
