@@ -1,0 +1,114 @@
+version: 2
+
+models:
+  - name: mart_payment_recovery_daily
+    description: >-
+      One row per invoice issue date containing EUR billing, collection,
+      retry, recovery and refund metrics. Outcomes are attributed to the
+      invoice cohort date rather than the date on which payment later succeeded.
+    columns:
+      - name: invoice_date
+        description: Calendar date on which the grouped invoices were issued.
+        data_tests:
+          - unique
+          - not_null
+
+      - name: invoice_count
+        description: Number of invoices issued on the date.
+        data_tests:
+          - not_null
+
+      - name: paid_invoice_count
+        description: Number of invoices eventually collected successfully.
+        data_tests:
+          - not_null
+
+      - name: paid_first_attempt_invoice_count
+        description: Number of invoices collected without an earlier failed attempt.
+        data_tests:
+          - not_null
+
+      - name: initially_failed_invoice_count
+        description: Number of invoices with at least one failed collection attempt.
+        data_tests:
+          - not_null
+
+      - name: recovered_invoice_count
+        description: Number of initially failed invoices that later collected successfully.
+        data_tests:
+          - not_null
+
+      - name: open_unpaid_invoice_count
+        description: Number of open invoices without a successful payment.
+        data_tests:
+          - not_null
+
+      - name: uncollectible_invoice_count
+        description: Number of invoices classified as uncollectible.
+        data_tests:
+          - not_null
+
+      - name: void_invoice_count
+        description: Number of void invoices.
+        data_tests:
+          - not_null
+
+      - name: retried_invoice_count
+        description: Number of invoices with more than one payment attempt.
+        data_tests:
+          - not_null
+
+      - name: payment_attempt_count
+        description: Total number of payment attempts associated with the daily invoice cohort.
+        data_tests:
+          - not_null
+
+      - name: failed_payment_attempt_count
+        description: Total number of failed payment attempts for the daily invoice cohort.
+        data_tests:
+          - not_null
+
+      - name: refunded_invoice_count
+        description: Number of invoices with at least one successful refund.
+        data_tests:
+          - not_null
+
+      - name: refund_transaction_count
+        description: Total number of successful refund transactions.
+        data_tests:
+          - not_null
+
+      - name: gross_billed_eur
+        description: Total EUR amount requested across invoices issued on the date.
+        data_tests:
+          - not_null
+
+      - name: gross_collected_eur
+        description: Total EUR amount successfully collected for the invoice cohort.
+        data_tests:
+          - not_null
+
+      - name: refunded_eur
+        description: Total EUR amount subsequently refunded for the invoice cohort.
+        data_tests:
+          - not_null
+
+      - name: net_collected_eur
+        description: Gross collected EUR minus refunded EUR.
+        data_tests:
+          - not_null
+
+      - name: collection_rate
+        description: Paid invoices divided by all invoices issued on the date.
+        data_tests:
+          - not_null
+
+      - name: first_attempt_success_rate
+        description: First-attempt paid invoices divided by all invoices issued on the date.
+        data_tests:
+          - not_null
+
+      - name: payment_recovery_rate
+        description: >-
+          Recovered invoices divided by invoices with at least one failed attempt;
+          null when the date has no initially failed invoices.

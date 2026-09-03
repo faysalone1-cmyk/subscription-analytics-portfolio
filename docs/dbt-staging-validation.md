@@ -1,11 +1,12 @@
-# dbt Staging Lineage and Validation
+# dbt Modeling Lineage and Validation
 
 Initially validated: 2026-08-27
 Extended validation: 2026-09-02
+Three-layer validation: 2026-09-03
 
 ## Purpose
 
-Prove that dbt can reference all approved BigQuery raw sources and build tested, grain-preserving staging models in the separate analytics dataset.
+Prove that dbt can reference approved BigQuery raw sources, preserve source grains in staging, combine one-to-many payment data safely at invoice grain, and publish reconciled daily payment-recovery metrics in the separate analytics dataset.
 
 ## Declared sources
 
@@ -34,22 +35,31 @@ The declaration records their warehouse address and approved grain descriptions 
 | `skillspring_raw.payment_attempts` | `skillspring_analytics.stg_payment_attempts` | One row per attempt | Exact minor-unit-to-euro conversion plus retry and success flags |
 | `skillspring_raw.refunds` | `skillspring_analytics.stg_refunds` | One row per refund transaction | Exact minor-unit-to-euro conversion with governed payment-attempt lineage and refund reasons |
 
+The downstream lineage is:
+
+| Upstream models | dbt model | Grain | Governed transformation |
+|---|---|---|---|
+| `stg_invoices`, `stg_payment_attempts`, `stg_refunds` | `int_invoice_payment_outcomes` | One row per invoice | Pre-aggregated attempt and refund history, payment outcome, refund status, and net collected amount |
+| `int_invoice_payment_outcomes` | `mart_payment_recovery_daily` | One row per invoice issue date | Daily payment volumes, collection and recovery rates, refund counts, and gross/net EUR totals |
+
 ## dbt build evidence
 
 dbt Core 1.11.14 with the BigQuery adapter 1.11.3 parsed:
 
 - 9 sources
-- 6 models
-- 34 generic data tests
+- 8 models across staging, intermediate, and mart layers
+- 74 generic data tests
+- 2 singular business-rule and reconciliation tests
 
-`dbt build --select path:models/staging` created all six BigQuery views and passed all 34 tests:
+`dbt build --select path:models` created all eight BigQuery views and passed all 76 tests:
 
-- 6 uniqueness tests
-- 11 not-null tests
-- 13 accepted-value tests
-- 4 relationship tests
+- 8 uniqueness tests
+- 41 not-null tests
+- 17 accepted-value tests
+- 8 relationship tests
+- 2 singular tests
 
-Final dbt result: `PASS=40 WARN=0 ERROR=0 SKIP=0 TOTAL=40`.
+Final dbt result: `PASS=84 WARN=0 ERROR=0 SKIP=0 TOTAL=84`.
 
 ## Independent transformation validation
 
@@ -71,6 +81,19 @@ Independent Week 2 warehouse review also confirmed:
 - The version-controlled `sql/validation/refund_staging_validation.sql` returned zero amount-conversion, non-positive-amount, missing-payment, unsuccessful-payment, timestamp-order, currency, and over-refund violations.
 - A representative successful payment with two partial refunds retained two distinct refund rows; the combined EUR 13.28 refund remained below the original EUR 31.99 payment.
 
+Independent invoice-outcome and mart review also confirmed:
+
+- `int_invoice_payment_outcomes` contained 128,633 rows and 128,633 distinct invoice IDs.
+- Payment outcomes reconciled to 115,755 first-attempt successes, 8,361 recovered invoices, 143 open unpaid invoices, and 4,374 uncollectible invoices.
+- All attempt-count, paid-status, outcome-flag, refund, over-refund, conversion, and net-amount checks returned zero violations.
+- `mart_payment_recovery_daily` contained 532 rows and 532 distinct invoice dates from 2025-01-15 through 2026-06-30.
+- Summed mart totals retained all 128,633 invoices and returned zero daily count, rate, financial, or cross-layer reconciliation differences.
+- The two version-controlled singular tests returned zero invalid rows.
+
+## Documentation evidence
+
+`dbt docs generate` cataloged all eight models, 76 tests, and nine sources. Visual review of the generated local site confirmed that model descriptions, column descriptions, warehouse types, attached tests, and lineage are visible. The lineage graph shows raw invoices, payment attempts, and refunds flowing through their staging views into `int_invoice_payment_outcomes`, then into `mart_payment_recovery_daily` and its reconciliation test.
+
 ## Result and boundary
 
-The expanded dbt lineage is working and tested from six raw sources to six staging views. Three declared sources do not yet have staging models, and no intermediate models, marts, governed business metrics, or reconciliation reports have been built. Those remain later roadmap deliverables.
+The dbt lineage is working and tested from six raw sources to six staging views, one invoice-grain intermediate view, and one daily payment-recovery mart. Three declared sources do not yet have staging models. Broader dimensional models, recurring-revenue and retention marts, metric governance, Python validation, experimentation, and dashboard outputs remain later roadmap deliverables.

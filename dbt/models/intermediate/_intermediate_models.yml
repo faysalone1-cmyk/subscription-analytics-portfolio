@@ -1,0 +1,170 @@
+version: 2
+
+models:
+  - name: int_invoice_payment_outcomes
+    description: >-
+      One row per invoice combining invoice facts with aggregated payment-attempt
+      and refund history. The model classifies collection and refund outcomes
+      without multiplying invoice amounts across one-to-many relationships.
+    columns:
+      - name: invoice_id
+        description: Unique identifier and grain key for the invoice.
+        data_tests:
+          - unique
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_invoices')
+                field: invoice_id
+
+      - name: subscription_id
+        description: Subscription associated with the invoice.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_subscriptions')
+                field: subscription_id
+
+      - name: plan_version_id
+        description: Plan version whose commercial terms produced the invoice.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_plans')
+                field: plan_version_id
+
+      - name: billing_reason
+        description: Business event that caused the invoice to be created.
+
+      - name: billing_period_start
+        description: First service date covered by the invoice.
+
+      - name: billing_period_end
+        description: Exclusive end date of the invoiced service period.
+
+      - name: issued_at
+        description: UTC timestamp when the invoice was issued.
+
+      - name: due_at
+        description: UTC timestamp when payment was due.
+
+      - name: amount_due_minor_units
+        description: Amount billed in integer euro cents.
+
+      - name: amount_due_eur
+        description: Exact amount billed in euros.
+
+      - name: currency_code
+        description: Currency used for invoice, payment and refund amounts.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['EUR']
+
+      - name: invoice_status
+        description: Invoice status at the reporting cutoff.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['open', 'paid', 'uncollectible', 'void']
+
+      - name: paid_at
+        description: UTC timestamp when full invoice collection completed.
+
+      - name: is_paid
+        description: True when the source invoice status is paid.
+
+      - name: attempt_count
+        description: Total number of collection attempts made for the invoice.
+        data_tests:
+          - not_null
+
+      - name: failed_attempt_count
+        description: Number of failed collection attempts for the invoice.
+        data_tests:
+          - not_null
+
+      - name: successful_attempt_count
+        description: Number of successful collection attempts for the invoice.
+        data_tests:
+          - not_null
+
+      - name: latest_attempt_number
+        description: Highest attempt sequence number observed for the invoice.
+
+      - name: first_attempted_at
+        description: UTC timestamp of the first collection attempt.
+
+      - name: last_attempted_at
+        description: UTC timestamp of the latest collection attempt.
+
+      - name: successful_attempted_at
+        description: UTC timestamp of the successful collection attempt when present.
+
+      - name: successful_payment_attempt_id
+        description: Identifier of the successful payment attempt when present.
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('stg_payment_attempts')
+                field: payment_attempt_id
+
+      - name: amount_collected_minor_units
+        description: Successfully collected amount in integer euro cents.
+        data_tests:
+          - not_null
+
+      - name: amount_collected_eur
+        description: Successfully collected amount in euros.
+
+      - name: refund_count
+        description: Number of successful refund transactions for the invoice.
+        data_tests:
+          - not_null
+
+      - name: total_refunded_minor_units
+        description: Cumulative refunded amount in integer euro cents.
+        data_tests:
+          - not_null
+
+      - name: total_refunded_eur
+        description: Cumulative refunded amount in euros.
+
+      - name: first_refunded_at
+        description: UTC timestamp of the first refund when present.
+
+      - name: last_refunded_at
+        description: UTC timestamp of the latest refund when present.
+
+      - name: is_paid_first_attempt
+        description: True when collection succeeded without an earlier failure.
+
+      - name: is_recovered_payment
+        description: True when collection succeeded after at least one failed attempt.
+
+      - name: has_refund
+        description: True when the invoice has at least one refund transaction.
+
+      - name: net_collected_minor_units
+        description: Collected amount minus refunds in integer euro cents.
+        data_tests:
+          - not_null
+
+      - name: net_collected_eur
+        description: Collected amount minus refunds in euros.
+
+      - name: payment_outcome
+        description: Governed invoice-level payment outcome.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['paid_first_attempt', 'recovered_after_failure', 'open_unpaid', 'uncollectible', 'void']
+
+      - name: refund_status
+        description: Governed classification of cumulative invoice refunds.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['not_refunded', 'partially_refunded', 'fully_refunded']
