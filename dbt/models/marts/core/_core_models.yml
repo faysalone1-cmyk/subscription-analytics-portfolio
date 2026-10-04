@@ -1,0 +1,124 @@
+version: 2
+
+models:
+  - name: dim_customers
+    description: >-
+      One row per SkillSpring customer containing governed acquisition,
+      geography, device, learning-goal, and signup-cohort attributes.
+    columns:
+      - name: customer_id
+        description: Unique customer identifier and dimension key.
+        data_tests:
+          - unique
+          - not_null
+
+      - name: signup_at
+        description: UTC timestamp when the customer registered.
+
+      - name: signup_date
+        description: Calendar date on which the customer registered.
+        data_tests:
+          - not_null
+
+      - name: signup_month
+        description: First calendar day of the customer's signup month.
+        data_tests:
+          - not_null
+
+      - name: country_code
+        description: Country code recorded at signup.
+
+      - name: region
+        description: Governed reporting region derived from country_code.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['northern_europe', 'western_europe', 'southern_europe']
+
+      - name: acquisition_channel
+        description: Channel credited with acquiring the customer.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['organic_search', 'paid_search', 'paid_social', 'referral', 'affiliate', 'direct']
+
+      - name: acquisition_campaign
+        description: Acquisition campaign recorded for the customer when applicable.
+
+      - name: device_type
+        description: Device category recorded when the customer registered.
+
+      - name: learning_goal
+        description: Learning objective selected by the customer.
+
+  - name: dim_plan_versions
+    description: >-
+      One row per commercial plan version, preserving the exact price,
+      billing terms, and effective dates used by historical fact rows.
+    columns:
+      - name: plan_version_id
+        description: Unique identifier for the historical plan version.
+        data_tests:
+          - unique
+          - not_null
+
+      - name: plan_code
+        description: Stable product-plan code shared by versions of the same plan.
+        data_tests:
+          - not_null
+
+      - name: plan_tier
+        description: Commercial tier of the plan version.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['standard', 'premium']
+
+      - name: billing_interval
+        description: Recurring billing frequency of the plan version.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['month', 'year']
+
+      - name: price_minor_units
+        description: Plan price stored as integer euro cents.
+        data_tests:
+          - not_null
+
+      - name: price_eur
+        description: Exact plan price in euros inherited from staging.
+        data_tests:
+          - not_null
+
+      - name: currency_code
+        description: Currency used for the plan price.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['EUR']
+
+      - name: trial_days
+        description: Number of trial days offered by the plan version.
+        data_tests:
+          - not_null
+
+      - name: valid_from
+        description: First date on which the plan version is valid.
+        data_tests:
+          - not_null
+
+      - name: valid_to
+        description: Final validity date; null when the version remains current.
+
+      - name: is_current_plan_version
+        description: True when valid_to is null.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [true, false]
+                quote: false
