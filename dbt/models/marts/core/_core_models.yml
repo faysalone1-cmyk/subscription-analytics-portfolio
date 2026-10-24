@@ -122,3 +122,112 @@ models:
               arguments:
                 values: [true, false]
                 quote: false
+  - name: fct_subscriptions
+    description: >-
+      One row per subscription instance, accumulating its latest lifecycle
+      milestones, current status, customer, and initial/current plan versions.
+    columns:
+      - name: subscription_id
+        description: Unique identifier and fact-table grain for a subscription instance.
+        data_tests:
+          - unique
+          - not_null
+
+      - name: customer_id
+        description: Customer who owns the subscription.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_customers')
+                field: customer_id
+
+      - name: initial_plan_version_id
+        description: Plan version selected when the subscription began.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_plan_versions')
+                field: plan_version_id
+
+      - name: current_plan_version_id
+        description: Latest plan version associated with the subscription.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_plan_versions')
+                field: plan_version_id
+
+      - name: created_at
+        description: UTC timestamp when the subscription instance was created.
+        data_tests:
+          - not_null
+
+      - name: created_date
+        description: Calendar date on which the subscription was created.
+        data_tests:
+          - not_null
+
+      - name: created_month
+        description: First calendar day of the subscription creation month.
+        data_tests:
+          - not_null
+
+      - name: trial_started_at
+        description: UTC timestamp when the subscription trial began.
+        data_tests:
+          - not_null
+
+      - name: trial_scheduled_end_at
+        description: Scheduled UTC timestamp for the trial to end.
+        data_tests:
+          - not_null
+
+      - name: paid_started_at
+        description: UTC timestamp of first paid access; null when never converted.
+
+      - name: current_period_start_at
+        description: Start timestamp of the latest known paid billing period.
+
+      - name: current_period_end_at
+        description: Exclusive end timestamp of the latest known paid billing period.
+
+      - name: current_status
+        description: Latest subscription status at the reporting cutoff.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['trialing', 'active', 'past_due', 'canceled']
+
+      - name: cancel_requested_at
+        description: UTC timestamp when cancellation was requested, when applicable.
+
+      - name: ended_at
+        description: UTC timestamp when subscription access ended, when applicable.
+
+      - name: converted_to_paid
+        description: True when the subscription has a paid-start timestamp.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [true, false]
+                quote: false
+
+      - name: is_canceled
+        description: True when the latest subscription status is canceled.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [true, false]
+                quote: false
+
+      - name: trial_to_paid_days
+        description: Whole days between trial start and first paid access.
+
+      - name: completed_lifetime_days
+        description: Whole days from creation to ending; null for subscriptions not ended.
