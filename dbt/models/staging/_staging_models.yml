@@ -215,3 +215,81 @@ models:
           - accepted_values:
               arguments:
                 values: ['customer_request', 'billing_error', 'duplicate_charge', 'service_issue', 'fraud_reported']
+
+  - name: stg_subscription_events
+    description: >-
+      One row per immutable subscription lifecycle event, preserving event
+      sequence, status transitions, plan-version transitions, and event reason.
+    columns:
+      - name: subscription_event_id
+        description: Unique identifier and grain for a subscription lifecycle event.
+        data_tests:
+          - unique
+          - not_null
+
+      - name: subscription_id
+        description: Subscription whose lifecycle changed.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_subscriptions')
+                field: subscription_id
+
+      - name: event_sequence
+        description: One-based chronological sequence within the subscription.
+        data_tests:
+          - not_null
+
+      - name: event_at
+        description: UTC timestamp when the lifecycle event occurred.
+        data_tests:
+          - not_null
+
+      - name: event_date
+        description: Calendar date derived from event_at.
+        data_tests:
+          - not_null
+
+      - name: event_type
+        description: Controlled lifecycle event classification.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['trial_started', 'trial_converted', 'plan_changed', 'past_due', 'payment_recovered', 'cancel_requested', 'cancellation_revoked', 'canceled']
+
+      - name: from_status
+        description: Status before the event; null only for the first trial_started event.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['trialing', 'active', 'past_due', 'canceled']
+
+      - name: to_status
+        description: Status after the event.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['trialing', 'active', 'past_due', 'canceled']
+
+      - name: from_plan_version_id
+        description: Plan version before the event; null only for the first trial_started event.
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('stg_plans')
+                field: plan_version_id
+
+      - name: to_plan_version_id
+        description: Plan version after the event.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_plans')
+                field: plan_version_id
+
+      - name: event_reason
+        description: Business reason explaining why the lifecycle transition occurred.

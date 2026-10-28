@@ -231,3 +231,95 @@ models:
 
       - name: completed_lifetime_days
         description: Whole days from creation to ending; null for subscriptions not ended.
+
+  - name: fct_subscription_events
+    description: >-
+      One immutable row per subscription lifecycle event, preserving the
+      ordered status and plan-version transition for historical analysis.
+    columns:
+      - name: subscription_event_id
+        description: Unique identifier and fact-table grain for a lifecycle event.
+        data_tests:
+          - unique
+          - not_null
+
+      - name: subscription_id
+        description: Subscription to which the lifecycle event belongs.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('fct_subscriptions')
+                field: subscription_id
+
+      - name: customer_id
+        description: Customer who owns the event's subscription.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_customers')
+                field: customer_id
+
+      - name: event_sequence
+        description: Contiguous event order within each subscription, beginning at one.
+        data_tests:
+          - not_null
+
+      - name: event_at
+        description: UTC timestamp when the lifecycle event occurred.
+        data_tests:
+          - not_null
+
+      - name: event_date
+        description: Calendar date on which the lifecycle event occurred.
+        data_tests:
+          - not_null
+
+      - name: event_month
+        description: First calendar day of the lifecycle event month.
+        data_tests:
+          - not_null
+
+      - name: event_type
+        description: Governed lifecycle-event classification.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['trial_started', 'trial_converted', 'plan_changed', 'past_due', 'payment_recovered', 'cancel_requested', 'cancellation_revoked', 'canceled']
+
+      - name: from_status
+        description: Status before the event; null only for the initial trial_started event.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['trialing', 'active', 'past_due', 'canceled']
+
+      - name: to_status
+        description: Status immediately after the event.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['trialing', 'active', 'past_due', 'canceled']
+
+      - name: from_plan_version_id
+        description: Plan version before the event; null only for trial_started.
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('dim_plan_versions')
+                field: plan_version_id
+
+      - name: to_plan_version_id
+        description: Plan version immediately after the event.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_plan_versions')
+                field: plan_version_id
+
+      - name: event_reason
+        description: Optional operational reason recorded for the lifecycle event.
