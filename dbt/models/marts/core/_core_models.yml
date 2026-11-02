@@ -323,3 +323,65 @@ models:
 
       - name: event_reason
         description: Optional operational reason recorded for the lifecycle event.
+  - name: fct_product_events
+    description: One row per product interaction event with customer, session, and behavioral context.
+    columns:
+      - name: product_event_id
+        description: Unique identifier and grain for a product event.
+        data_tests:
+          - unique
+          - not_null
+
+      - name: customer_id
+        description: Customer who generated the event.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_customers')
+                field: customer_id
+
+      - name: session_id
+        description: Product session in which the event occurred.
+        data_tests:
+          - not_null
+
+      - name: occurred_at
+        description: Timestamp when the event occurred.
+        data_tests:
+          - not_null
+
+      - name: event_date
+        description: Calendar date derived from occurred_at.
+        data_tests:
+          - not_null
+
+      - name: event_month
+        description: First day of the event calendar month.
+        data_tests:
+          - not_null
+
+      - name: event_name
+        description: Controlled product interaction classification.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['session_started', 'onboarding_started', 'onboarding_step_completed', 'onboarding_completed', 'program_viewed', 'program_started', 'lesson_started', 'lesson_completed']
+
+      - name: platform
+        description: Product platform on which the event occurred.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['ios', 'android', 'web']
+
+      - name: onboarding_step
+        description: Onboarding step populated for onboarding_step_completed events.
+
+      - name: program_id
+        description: Program context when the event relates to a program or lesson.
+
+      - name: lesson_id
+        description: Lesson context when the event relates to a lesson.
