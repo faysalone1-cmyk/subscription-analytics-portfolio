@@ -4,7 +4,7 @@ SkillSpring is a production-style analytics portfolio project for a fictional co
 
 ## Project status
 
-Week 2 — tested payment-outcome modeling across staging, intermediate, and mart layers. The dbt project is connected to two EU BigQuery datasets. The validated `skillspring_raw` layer contains 2,512,863 deterministic synthetic rows across nine physical tables. The `skillspring_analytics` layer contains six grain-preserving staging views, one invoice-grain payment-outcome view, and one daily payment-recovery mart.
+Week 3 complete — the repository now contains a governed dimensional model for subscriptions, lifecycle events, product interactions, and invoice-payment recovery. The dbt project is connected to two EU BigQuery datasets. The validated `skillspring_raw` layer contains 2,512,863 deterministic synthetic rows across nine physical tables. The `skillspring_analytics` layer contains eight grain-preserving staging views, one invoice-grain intermediate view, one daily payment-recovery mart, two conformed dimensions, and three core facts. Week 4 metric governance is next.
 
 ## Evidence at a glance
 
@@ -14,25 +14,26 @@ Week 2 — tested payment-outcome modeling across staging, intermediate, and mar
 | Raw BigQuery tables | 9 |
 | Local validation groups | 11 passed |
 | Warehouse raw checks | 27 passed |
-| dbt models | 8 across 3 layers |
-| dbt generic tests | 74 passed |
-| dbt singular tests | 2 passed |
-| Full dbt build | 84/84 operations passed |
+| dbt models | 15 across staging, intermediate, and mart layers |
+| dbt data tests | 177 passed |
+| Full dbt build | 192/192 operations passed |
 | Independent baseline staging checks | 9 passed |
 | Invoice outcomes | 128,633 unique invoices |
 | Daily recovery mart | 532 unique invoice dates |
+| Product events | 1,998,136 unique product interactions |
+| Latest payment-recovery controls | 10/10 passed with zero violations |
 
 ## Architecture and scope
 
 The approved business scope, dataset boundary, entities, and seven-week delivery chain are documented in [`docs/project-brief.md`](docs/project-brief.md). The verified warehouse connection is documented in [`docs/dbt-connection-validation.md`](docs/dbt-connection-validation.md), raw generation/load evidence is in [`docs/raw-data-load-validation.md`](docs/raw-data-load-validation.md), and the tested dbt lineage is in [`docs/dbt-staging-validation.md`](docs/dbt-staging-validation.md).
 
-The current raw-to-staging system, component responsibilities, security boundary, and planned downstream layers are shown in [`docs/architecture.md`](docs/architecture.md).
+The current raw-to-mart system, component responsibilities, model grains, and security boundary are shown in [`docs/architecture.md`](docs/architecture.md). The dimensional design and still-open physical-design benchmark are documented in [`docs/dimensional-model-design.md`](docs/dimensional-model-design.md).
 
 Repository changes follow the branch, validation, review, and pull-request process documented in [`docs/git-workflow.md`](docs/git-workflow.md).
 
 Pull requests and pushes to `main` also run the credential-free workflow in [`.github/workflows/analytics-ci.yml`](.github/workflows/analytics-ci.yml). It checks Python syntax and JSON schemas, generates and independently validates a small deterministic dataset, and parses the dbt project without connecting to BigQuery. Live warehouse builds remain a separate authenticated validation step.
 
-The evidence, validation boundaries, readiness explanations, honest limitations, and approved Week 2 handoff are consolidated in [`docs/week-1-review.md`](docs/week-1-review.md).
+The evidence trail includes the Week 1 foundation review, model-specific review notes, and independent SQL controls under `sql/validation/`. Two decision-focused exploratory analyses are published in [`docs/active-subscriptions-by-country.md`](docs/active-subscriptions-by-country.md) and [`docs/career-customer-analysis.md`](docs/career-customer-analysis.md).
 
 ## Planned analytical flow
 
@@ -51,6 +52,7 @@ The evidence, validation boundaries, readiness explanations, honest limitations,
 - `dbt/`: dbt project, source declarations, models, tests, macros, and documentation.
 - `scripts/`: deterministic generation, independent validation, and raw BigQuery loading.
 - `sql/validation/`: independent warehouse validation queries.
+- `sql/analysis/`: reviewed exploratory SQL analyses that reuse the governed dimensional model.
 - `analysis/`: planned Week 5 Python analysis and metric validation; not yet created.
 - `dashboard/`: planned Week 7 dashboard assets; not yet created.
 

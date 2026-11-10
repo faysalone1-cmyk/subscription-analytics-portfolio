@@ -49,6 +49,6 @@ Creates the governed `fct_product_events` BigQuery table. Raw sources, existing 
 
 No credentials, generated raw data, private profiles, or local configuration files are included.
 
-## Remaining scope
+## Completion status
 
-The next step is a full-project build, followed by commit, push, pull-request review, CI validation, and merge.
+The full project build passed 192 operations. Pull request #11 passed credential-free CI and merged the fact into `main`; local and remote feature branches were then removed. The separate partitioning and clustering benchmark remains documented as an open physical-design follow-up.

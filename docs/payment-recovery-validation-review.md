@@ -102,12 +102,14 @@ generated warehouse data remain ignored and are not part of the change.
 - BigQuery execution requires local authentication because repository CI remains
   credential-free.
 
-## Proposed Git scope
+## Published Git scope
 
 Include only:
 
 - `sql/validation/invoice_payment_outcomes_validation.sql`
 - `docs/payment-recovery-validation-review.md`
 
-Keep the four exploratory country and career-customer analysis paths untracked
-and outside this production validation change.
+Pull request #12 included exactly these two files, passed CI, and merged into
+`main`. The exploratory country and career-customer analyses remained outside
+that production validation change and were reviewed later as a separate
+documentation and analysis package.

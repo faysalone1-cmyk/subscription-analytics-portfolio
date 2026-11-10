@@ -1,10 +1,10 @@
 # SkillSpring Analytics Architecture
 
-Status: Week 1 foundation approved 2026-08-28; three-layer dbt lineage validated 2026-09-03
+Status: Week 3 dimensional lineage validated and merged through 2026-11-05
 
 ## Purpose
 
-This document explains how SkillSpring's approved synthetic source contract becomes tested analytical data. It distinguishes the current working architecture from layers planned for later weeks.
+This document explains how SkillSpring's approved synthetic source contract becomes tested analytical data. It distinguishes the current working architecture from the governed metrics, Python analysis, experiment, and dashboard planned for later weeks.
 
 ## Current and planned flow
 
@@ -16,7 +16,7 @@ flowchart LR
         validator["Python data validator"]
         loader["BigQuery raw-data loader"]
         sources["dbt source declarations"]
-        models["Eight dbt models across three layers"]
+        models["Fifteen dbt models across three layers"]
         checks["Generic tests, singular tests, and validation SQL"]
         evidence["Validation evidence"]
     end
@@ -27,13 +27,15 @@ flowchart LR
 
     subgraph warehouse["BigQuery project: skillspring-analytics, EU"]
         rawData["skillspring_raw: nine physical tables"]
-        stagingViews["skillspring_analytics: six staging views"]
+        stagingViews["skillspring_analytics: eight staging views"]
         invoiceOutcomes["Invoice-grain payment outcomes"]
         recoveryMart["Daily payment-recovery mart"]
+        dimensions["Customer and plan-version dimensions"]
+        facts["Subscription, lifecycle-event, and product-event facts"]
     end
 
     subgraph planned["Planned later weeks"]
-        dimensional["Additional dimensional and metric models"]
+        dimensional["Governed metric marts and dictionary"]
         pythonAnalysis["Python analysis and experiment"]
         dashboard["Dashboard and case study"]
     end
@@ -49,12 +51,16 @@ flowchart LR
     models -->|"Creates views"| stagingViews
     stagingViews -->|"Aggregated safely"| invoiceOutcomes
     invoiceOutcomes -->|"Grouped by invoice date"| recoveryMart
+    stagingViews -->|"Publishes conformed entities"| dimensions
+    stagingViews -->|"Publishes analytical events"| facts
+    dimensions -->|"Enriches"| facts
     rawData -->|"Validated by"| checks
     stagingViews -->|"Validated by"| checks
     invoiceOutcomes -->|"Validated by"| checks
     recoveryMart -->|"Reconciled by"| checks
     checks -->|"Documents results"| evidence
     recoveryMart -.->|"Future input"| dimensional
+    facts -.->|"Future input"| dimensional
     dimensional -.-> pythonAnalysis
     pythonAnalysis -.-> dashboard
 ```
@@ -69,9 +75,9 @@ Solid connections represent current working lineage. Dotted connections represen
 | Generated CSV files | Ignored local `data/generated/` directory | Reproducible warehouse-loading inputs | Local and disposable |
 | Raw layer | BigQuery `skillspring_raw` | Preserve source-shaped synthetic records across nine entities | Nine physical tables |
 | dbt source declarations | Repository | Register raw-table addresses, descriptions, and lineage without copying data | Version controlled metadata |
-| Staging layer | BigQuery `skillspring_analytics` | Apply light, reusable, grain-preserving transformations | Six logical views |
+| Staging layer | BigQuery `skillspring_analytics` | Apply light, reusable, grain-preserving transformations | Eight logical views |
 | Intermediate layer | BigQuery `skillspring_analytics` | Aggregate attempts and refunds safely to one row per invoice and classify outcomes | One logical view |
-| Mart layer | BigQuery `skillspring_analytics` | Publish daily invoice-cohort payment, recovery, refund, and EUR metrics | One logical view |
+| Mart layer | BigQuery `skillspring_analytics` | Publish conformed dimensions, analytical facts, and daily invoice-cohort payment recovery | Five tables and one logical view |
 | Tests and validation | Repository plus BigQuery execution | Detect grain, relationship, accepted-value, and transformation failures | Version-controlled tests and evidence |
 
 ## Current dbt lineage
@@ -84,19 +90,24 @@ Solid connections represent current working lineage. Dotted connections represen
 | `skillspring_raw.invoices` | `skillspring_analytics.stg_invoices` | One row per invoice | Exact euro amount and paid-status flag |
 | `skillspring_raw.payment_attempts` | `skillspring_analytics.stg_payment_attempts` | One row per payment attempt | Exact euro amount plus retry and success flags |
 | `skillspring_raw.refunds` | `skillspring_analytics.stg_refunds` | One row per refund transaction | Exact euro amount with governed payment-attempt lineage and refund reasons |
+| `skillspring_raw.subscription_events` | `skillspring_analytics.stg_subscription_events` | One row per lifecycle event | Calendar fields and preserved transition context |
+| `skillspring_raw.product_events` | `skillspring_analytics.stg_product_events` | One row per product event | Calendar fields and governed event context |
 
 | Upstream models | Downstream model | Resulting grain | Added logic |
 |---|---|---|---|
 | `stg_invoices`, `stg_payment_attempts`, `stg_refunds` | `int_invoice_payment_outcomes` | One row per invoice | Attempt and refund aggregation, payment outcome, refund status, and net collected amount |
 | `int_invoice_payment_outcomes` | `mart_payment_recovery_daily` | One row per invoice issue date | Daily volumes, collection and recovery rates, refunds, and gross/net EUR totals |
-
-The remaining three raw sources are declared in dbt but do not yet have staging models.
+| `stg_customers` | `dim_customers` | One row per customer | Conformed acquisition, geography, and learning-goal context |
+| `stg_plans` | `dim_plan_versions` | One row per commercial plan version | Historical price and effective-date context |
+| `stg_subscriptions` | `fct_subscriptions` | One row per subscription instance | Trial, conversion, cancellation, and current-state milestones |
+| `stg_subscription_events`, `fct_subscriptions` | `fct_subscription_events` | One row per lifecycle event | Customer enrichment and ordered lifecycle transitions |
+| `stg_product_events` | `fct_product_events` | One row per product event | Analysis-ready event, session, platform, and content context |
 
 ## Modeling boundary
 
 Each current staging model reads one raw source and preserves that source's grain. For example, `stg_payment_attempts` reads `payment_attempts`; it retains `invoice_id` from the attempt row but does not join the invoices table.
 
-Week 2 added grain-preserving plan, invoice, and refund staging models, then combined entities at invoice grain in `int_invoice_payment_outcomes`. Payment attempts are aggregated by invoice and refunds are linked to their successful attempts before either summary joins invoices. This boundary keeps cleaning logic separate from business combinations and prevents one-row-per-invoice amounts from multiplying across payment-attempt or refund rows. `mart_payment_recovery_daily` then aggregates the safe invoice-grain result by invoice issue date.
+Payment attempts are aggregated by invoice and refunds are linked to their successful attempts before either summary joins invoices. This boundary keeps cleaning logic separate from business combinations and prevents one-row-per-invoice amounts from multiplying across payment-attempt or refund rows. `mart_payment_recovery_daily` then aggregates the safe invoice-grain result by invoice issue date. The dimensional layer publishes reusable customer and plan context while facts preserve their declared subscription, lifecycle-event, and product-event grains.
 
 ## Reproducibility and security
 
@@ -111,10 +122,11 @@ Week 2 added grain-preserving plan, invoice, and refund staging models, then com
 - The full generator produced 2,512,863 rows across nine entities using seed `20260827`.
 - Local validation passed 11 independent groups with zero errors.
 - Warehouse raw validation passed 27 checks.
-- The full dbt build created eight views across staging, intermediate, and mart layers and passed 74 generic plus two singular tests (`PASS=84 WARN=0 ERROR=0 SKIP=0`).
+- The latest full dbt build created 15 models and passed 177 data tests (`PASS=192 WARN=0 ERROR=0 SKIP=0`).
 - Independent staging checks confirmed preserved plan, invoice, and refund grains; exact euro conversions; consistent statuses and timestamps; valid invoice periods; positive amounts; successful refund parents; and no over-refunded payments.
 - The invoice-grain model retained 128,633 rows and 128,633 distinct invoice IDs, with zero attempt, status, outcome, refund, or net-amount mismatches.
 - The daily mart retained all 128,633 invoices across 532 unique invoice dates, with zero daily formula, rate, financial, or cross-layer reconciliation differences.
-- `dbt docs generate` cataloged all eight models and 76 tests; visual review confirmed model descriptions, column documentation, tests, and raw-to-mart lineage.
+- The selected payment lineage most recently passed all 44 build operations, followed by ten independent warehouse controls with zero violations.
+- Product-event validation passed 13 targeted operations and seven independent warehouse controls with zero violations.
 
-Detailed evidence is available in `raw-data-load-validation.md` and `dbt-staging-validation.md`.
+Detailed evidence is available in the raw-load, staging, dimensional-model, fact-review, and payment-recovery review documents in this directory.

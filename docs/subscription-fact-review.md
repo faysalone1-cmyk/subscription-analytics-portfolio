@@ -45,6 +45,11 @@ Keep the country/career analyses, their reports, and career validation out of th
 - Eleven temporary boundary fixtures exercised the actual lifecycle predicate using SQLite NULL/Boolean behavior: valid active/trial/canceled examples passed; missing period endpoints, reversed periods/trials, paid-before-trial, canceled-without-end, and active-with-end examples were rejected. Actual model tests separately passed in BigQuery. Fixtures are predicate checks, not a replacement for warehouse execution.
 - No fact SQL changes, warehouse rebuilds, staging changes, or commits performed. Refresh the existing staged snapshot after reviewing the final working tree; its old EOF whitespace issue remains until then.
 
-## Next Git review
+## Completion status
 
-Include `dbt/tests/fct_subscriptions_business_rules.sql` with the model package listed above. Review working-tree changes, deliberately stage the selected paths, then inspect the staged diff and formatting. Keep exploratory country/career analysis files separate. Event-history reconciliation and cross-subscription overlap coverage remain explicitly outside this patch; this change does not claim to implement every source-contract rule.
+The subscription fact, lifecycle test, documentation, and independent controls
+passed review and merged through pull request #9. The exploratory country and
+career analyses remained outside that model package and were subsequently
+reviewed as a separate documentation and analysis change. Cross-subscription
+overlap remains outside the fact's current validation boundary; this review does
+not claim that every possible source-contract rule is automated.

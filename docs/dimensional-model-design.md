@@ -1,11 +1,11 @@
 # SkillSpring Dimensional Model Design
 
-Status: Week 3 design in progress
+Status: Week 3 dimensional models implemented and validated; physical-design benchmark remains open
 
 ## Purpose
 
-Define the analytical grains, keys, join paths, history rules, and BigQuery
-physical-design choices before implementing the Week 3 dimensional models.
+Record the implemented analytical grains, keys, join paths, history rules, and BigQuery
+physical-design decisions for the Week 3 dimensional models.
 The design extends the tested Week 2 payment lineage without changing the
 approved raw-source contract.
 
@@ -21,16 +21,16 @@ approved raw-source contract.
 7. Preserve exact monetary values and the invoice-level reconciliation controls
    established in Week 2.
 
-## Proposed core model grains and keys
+## Implemented core model grains and keys
 
 | Model | Role | Grain: one row per | Unique key | Repeatable foreign keys | Primary input |
 |---|---|---|---|---|---|
 | `dim_customers` | Conformed dimension | Customer | `customer_id` | None | `stg_customers` |
 | `dim_plan_versions` | Versioned dimension | Commercial plan version | `plan_version_id` | None | `stg_plans` |
 | `fct_subscriptions` | Accumulating process fact | Subscription instance | `subscription_id` | `customer_id`, `initial_plan_version_id`, `current_plan_version_id` | `stg_subscriptions` |
-| `fct_subscription_events` | Transaction/event fact | Subscription lifecycle event | `subscription_event_id` | `subscription_id`, `customer_id`, `from_plan_version_id`, `to_plan_version_id` | Planned `stg_subscription_events` plus `stg_subscriptions` |
-| `fct_invoice_payment_outcomes` | Accumulating outcome fact | Invoice | `invoice_id` | `subscription_id`, `customer_id`, `plan_version_id` | `int_invoice_payment_outcomes` plus `stg_subscriptions` |
-| `fct_product_events` | Transaction/event fact | Product event | `product_event_id` | `customer_id` | Planned `stg_product_events` |
+| `fct_subscription_events` | Transaction/event fact | Subscription lifecycle event | `subscription_event_id` | `subscription_id`, `customer_id`, `from_plan_version_id`, `to_plan_version_id` | `stg_subscription_events` plus `fct_subscriptions` |
+| `int_invoice_payment_outcomes` | Accumulating outcome model | Invoice | `invoice_id` | `subscription_id`, `plan_version_id` | `stg_invoices`, `stg_payment_attempts`, and `stg_refunds` |
+| `fct_product_events` | Transaction/event fact | Product event | `product_event_id` | `customer_id` | `stg_product_events` |
 
 `experiment_assignments` is reserved for the Week 6 experiment workflow. It can
 later become a factless fact at one row per customer and experiment without
@@ -52,8 +52,8 @@ changing the Week 3 core grains.
 
 | Analytical question | Safe path | Cardinality and protection |
 |---|---|---|
-| Invoice outcomes by customer attributes | `fct_invoice_payment_outcomes.customer_id` to `dim_customers.customer_id` | Many invoices to one unique customer row |
-| Invoice outcomes by billed plan version | `fct_invoice_payment_outcomes.plan_version_id` to `dim_plan_versions.plan_version_id` | Many invoices to one exact historical plan-version row |
+| Invoice outcomes by customer attributes | Join `int_invoice_payment_outcomes.subscription_id` through `fct_subscriptions` to `dim_customers` | Many invoices to one subscription and one unique customer row |
+| Invoice outcomes by billed plan version | `int_invoice_payment_outcomes.plan_version_id` to `dim_plan_versions.plan_version_id` | Many invoices to one exact historical plan-version row |
 | Product activity by customer attributes | `fct_product_events.customer_id` to `dim_customers.customer_id` | Many events to one unique customer row |
 | Subscription lifecycle by customer | `fct_subscription_events.customer_id` to `dim_customers.customer_id` | Many lifecycle events to one unique customer row |
 | Plan change analysis | Event `from_plan_version_id` and `to_plan_version_id` joined separately to `dim_plan_versions.plan_version_id` | The same versioned dimension plays two named roles without collapsing history |
@@ -71,12 +71,12 @@ customer-and-period grain before their measures are combined.
 | `dim_plan_versions` | Never collapse versions to `plan_code`. Each `plan_version_id` preserves its own price and effective dates, allowing a fact to retain the commercial terms valid when it occurred. |
 | `fct_subscriptions` | An accumulating snapshot representing the latest known milestones and status at the reporting cutoff. A rebuild may update milestone or current-status columns without changing `subscription_id`. |
 | `fct_subscription_events` | Immutable event history. New lifecycle events add rows; existing event rows are not rewritten. |
-| `fct_invoice_payment_outcomes` | An accumulating outcome at one row per invoice. Payment, recovery, refund, and net-collected fields may change as later attempts or refunds arrive. |
+| `int_invoice_payment_outcomes` | An accumulating outcome at one row per invoice. Payment, recovery, refund, and net-collected fields may change as later attempts or refunds arrive. |
 | `fct_product_events` | Immutable event history. New customer actions add rows; existing event rows are not rewritten. |
 
 ## BigQuery physical design
 
-All Week 3 dimensions and facts are proposed as tables. A dbt build calculates
+The Week 3 dimensions and facts are implemented as tables. A dbt build calculates
 and stores their results once so repeated analytical queries read the published
 model instead of rebuilding its complete upstream logic on every request.
 
@@ -86,13 +86,12 @@ model instead of rebuilding its complete upstream logic on every request.
 | `dim_plan_versions` | Table | None | None | Eight version rows are too small to benefit from partitioning or clustering. |
 | `fct_subscriptions` | Table | None | None | Roughly 47,000 subscription rows remain small and are commonly read as a complete population. |
 | `fct_subscription_events` | Table | None initially | None initially | Roughly 129,000 rows do not yet justify many small date partitions; re-evaluate after measuring growth and query patterns. |
-| `fct_invoice_payment_outcomes` | Table | None initially | None initially | Roughly 129,000 already-aggregated rows remain inexpensive at the current portfolio scale; re-evaluate as invoice history grows. |
-| `fct_product_events` | Table | `event_date` | `event_name`, then `customer_id` | Nearly two million rows and date/event filters provide a justified pruning path. |
+| `int_invoice_payment_outcomes` | View | None | None | Roughly 129,000 already-aggregated rows remain inexpensive at the current portfolio scale; re-evaluate as invoice history grows. |
+| `fct_product_events` | Table | None currently | None currently | Nearly two million rows justify a measured partitioning and clustering benchmark before changing the physical design. |
 
-`event_date` is derived from `occurred_at`. A date-range predicate allows
-BigQuery to read only relevant date partitions. Within those partitions,
-clustering by `event_name` helps skip unrelated event groups, while the second
-cluster key supports customer-level filtering and grouping.
+`event_date` is derived from `occurred_at`. The intended benchmark will compare
+the current table with a candidate partition on `event_date` and candidate
+clusters on `event_name` and `customer_id` using equivalent filters.
 
 Partitioning is not applied automatically to every fact. Small facts would form
 many tiny partitions with little expected benefit. The design records current
@@ -115,8 +114,7 @@ query rather than merely adding configuration.
 The following choices will be approved only after examining expected query
 filters, table sizes, and update behavior:
 
-- Exact columns published by each fact and dimension.
-- Required generic and singular tests for each new model.
 - Whether measured growth later justifies partitioning or clustering the smaller
   facts.
-- The measured BigQuery dry-run result after `fct_product_events` exists.
+- The measured BigQuery dry-run result and final physical design for
+  `fct_product_events`.
