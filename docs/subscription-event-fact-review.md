@@ -74,6 +74,6 @@ This change creates the governed `fct_subscription_events` BigQuery table. Raw t
 
 No credentials, generated raw data, private profiles, or local configuration files are included.
 
-## Remaining scope
+## Completion status
 
-The next production deliverable is the invoice-payment outcome fact, followed by the partitioned product-event fact and final portfolio reporting layer.
+The subscription-event fact merged through pull request #10. The product-event fact and independent invoice-payment validation were subsequently completed and merged. Week 4 governed metric marts, reconciliation, and the metric dictionary are the next production deliverables.

@@ -1,8 +1,8 @@
 # Environment Readiness
 
-Checked: 2026-08-27
+Checked: 2026-11-10
 
-Status: dbt-connected — local repository, dbt BigQuery toolchain, Google Cloud CLI, authentication, active sandbox project, EU datasets, and a live dbt connection are verified. GitHub remote workflow remains pending.
+Status: ready — the local repository, dbt and BigQuery toolchain, project-local authentication, EU datasets, live warehouse connection, GitHub remote, pull-request workflow, and credential-free CI are verified.
 
 ## Evidence
 
@@ -15,7 +15,7 @@ Status: dbt-connected — local repository, dbt BigQuery toolchain, Google Cloud
 | dbt Core and BigQuery adapter | Project-local dbt Core 1.11.14 and BigQuery adapter 1.11.3; dependency integrity check passed | Ready |
 | Google Cloud CLI | Project-local Google Cloud SDK 582.0.0 | Ready |
 | BigQuery CLI | Project-local BigQuery CLI 2.1.37 | Ready |
-| GitHub CLI | `gh` command not found | Pending; required for the planned command-line pull-request workflow |
+| GitHub CLI | `gh` command not found | Optional; browser-based pull-request review and Git over SSH are verified |
 | Homebrew, uv, and pipx | Commands not found | Not blockers; the project can use a local Python virtual environment and official installers |
 | Google Cloud authentication | User authorization completed in ignored local Cloud configuration; account identity is not stored in repository files | Ready |
 | Google account | Faisal confirmed an existing Google account and completed the OAuth consent flow personally | Ready |
@@ -28,7 +28,7 @@ Status: dbt-connected — local repository, dbt BigQuery toolchain, Google Cloud
 | dbt local profile | Ignored `.tools/dbt/profiles.yml` validated; targets project `skillspring-analytics`, dataset `skillspring_analytics`, and EU location | Ready |
 | dbt authentication | Application Default Credentials saved only in ignored local Cloud configuration | Ready |
 | dbt-to-BigQuery connection | `dbt debug` reported `Connection test: OK connection ok` and `All checks passed` | Ready |
-| GitHub authentication and remote | Not tested because the CLI is absent and no remote exists | Pending |
+| GitHub authentication and remote | SSH authentication, `origin`, protected change review, CI, merge, synchronization, and branch cleanup verified through repeated pull requests | Ready |
 
 ## Compatibility decisions
 
@@ -72,8 +72,8 @@ Status: dbt-connected — local repository, dbt BigQuery toolchain, Google Cloud
 - [x] EU raw and analytics datasets created.
 - [x] Shared dbt project configuration and ignored local profile validated.
 - [x] Live dbt-to-BigQuery connection passed `dbt debug`.
-- [ ] GitHub authentication and repository remote verified.
+- [x] GitHub authentication and repository remote verified.
 
 ## Next safe action
 
-Define the physical columns, keys, generation rules, and validation expectations for the approved synthetic source entities. Then generate and load the raw tables before declaring dbt sources and building the first staging models. GitHub CLI, authentication, and remote setup remain a separate Week 1 task.
+Begin Week 4 metric governance using the existing dimensional lineage. Define each metric's business meaning, grain, exclusions, owner, and independent validation before adding revenue, subscription-health, activation, cohort, or retention marts.
